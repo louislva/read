@@ -11,23 +11,30 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 async function getOpenAITTS(text) {
   try {
-    // Get API key from storage
     const result = await chrome.storage.sync.get(["openaiApiKey"]);
     if (!result.openaiApiKey) {
       alert("Please set your OpenAI API key in the extension popup");
       return;
     }
 
-    const response = await fetch("https://api.openai.com/v1/audio/speech", {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${result.openaiApiKey}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "tts-1",
-        input: text,
-        voice: "alloy",
+        model: "gpt-4o-audio-preview",
+        modalities: ["text", "audio"],
+        audio: { voice: "alloy", format: "wav" },
+        messages: [
+          {
+            role: "user",
+            content:
+              "Please read the attached section of text out loud. Please do it in a thick Kiwi accent. The accent is very important.\n\n---\n\n" +
+              text,
+          },
+        ],
       }),
     });
 
@@ -35,7 +42,18 @@ async function getOpenAITTS(text) {
       throw new Error("Failed to generate speech");
     }
 
-    const audioBlob = await response.blob();
+    const responseData = await response.json();
+    const audioData = responseData.choices[0].message.audio.data;
+    const audioBlob = new Blob(
+      [
+        new Uint8Array(
+          atob(audioData)
+            .split("")
+            .map((char) => char.charCodeAt(0))
+        ),
+      ],
+      { type: "audio/wav" }
+    );
     const audioUrl = URL.createObjectURL(audioBlob);
 
     // Stop any currently playing audio
