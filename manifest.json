@@ -1,0 +1,36 @@
+{
+    "manifest_version": 3,
+    "name": "OpenAI TTS Reader",
+    "version": "1.0",
+    "description": "Read selected text using OpenAI's Text-to-Speech API",
+    "permissions": [
+        "activeTab",
+        "storage",
+        "scripting"
+    ],
+    "commands": {
+        "read-text": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+P",
+                "mac": "Command+Shift+P"
+            },
+            "description": "Read selected text"
+        }
+    },
+    "background": {
+        "service_worker": "background.js"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "<all_urls>"
+            ],
+            "js": [
+                "content.js"
+            ]
+        }
+    ],
+    "action": {
+        "default_popup": "popup.html"
+    }
+}
